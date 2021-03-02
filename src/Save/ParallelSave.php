@@ -3,6 +3,7 @@
 namespace Pion\Laravel\ChunkUpload\Save;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Pion\Laravel\ChunkUpload\ChunkFile;
 use Pion\Laravel\ChunkUpload\Config\AbstractConfig;
@@ -70,7 +71,11 @@ class ParallelSave extends ChunkSave
     protected function handleChunkFile($file)
     {
         // Move the uploaded file to chunk folder
-        $this->file->move($this->getChunkDirectory(true), $this->chunkFileName);
+        if (isset($_SERVER['GAE_SERVICE'])) {
+            Storage::disk('gcs')->put($file, $this->file->get());
+        }else {
+            $this->file->move($this->getChunkDirectory(true), $this->chunkFileName);
+        }
 
         // Found current number of chunks to determine if we have all chunks (we cant use the
         // index because order of chunks are different.
@@ -124,22 +129,37 @@ class ParallelSave extends ChunkSave
         if (file_exists($finalFilePath)) {
             @unlink($finalFilePath);
         }
-
-        $fileMerger = new FileMerger($finalFilePath);
+        if (isset($_SERVER['GAE_SERVICE'])) {
+            if (!$destinationFile = @fopen($finalFilePath, 'ab')) {
+                throw new ChunkSaveException('Failed to open output stream.', 102);
+            }
+        } else {
+            $fileMerger = new FileMerger($finalFilePath);
+        }
+        $gcsDisk = Storage::disk('gcs');
 
         // Append each chunk file
         foreach ($chunkFiles as $filePath) {
-            // Build the chunk file
-            $chunkFile = new ChunkFile($filePath, null, $this->chunkStorage());
+            if (isset($_SERVER['GAE_SERVICE'])) {
+                $fileContent = $gcsDisk->get($filePath);
+                fwrite($destinationFile, $fileContent);
+                $gcsDisk->delete($filePath);
+            } else {
+                // Build the chunk file
+                $chunkFile = new ChunkFile($filePath, null, $this->chunkStorage());
 
-            // Append the data
-            $fileMerger->appendFile($chunkFile->getAbsolutePath());
+                // Append the data
+                $fileMerger->appendFile($chunkFile->getAbsolutePath());
 
-            // Delete the chunk file
-            $chunkFile->delete();
+                // Delete the chunk file
+                $chunkFile->delete();
+            }
         }
-
-        $fileMerger->close();
+        if (isset($_SERVER['GAE_SERVICE'])) {
+            @fclose($destinationFile);
+        } else {
+            $fileMerger->close();
+        }
 
         // Build the chunk file instance
         $this->fullChunkFile = $this->createFullChunkFile($finalFilePath);

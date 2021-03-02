@@ -4,6 +4,7 @@ namespace Pion\Laravel\ChunkUpload\Storage;
 
 use Illuminate\Contracts\Filesystem\Filesystem as FilesystemContract;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\FilesystemInterface;
 use Pion\Laravel\ChunkUpload\ChunkFile;
@@ -115,7 +116,11 @@ class ChunkStorage
     public function files($rejectClosure = null)
     {
         // we need to filter files we don't support, lets use the collection
-        $filesCollection = new Collection($this->disk->files($this->directory(), false));
+        if (isset($_SERVER['GAE_SERVICE'])) {
+            $filesCollection = new Collection(Storage::disk('gcs')->files(session('upload_game_id')));
+        } else{
+            $filesCollection = new Collection($this->disk->files($this->directory(), false));
+        }
 
         return $filesCollection->reject(function ($file) use ($rejectClosure) {
             // ensure the file ends with allowed extension
