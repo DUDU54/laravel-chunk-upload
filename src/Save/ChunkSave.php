@@ -86,7 +86,7 @@ class ChunkSave extends AbstractSave
      */
     public function getChunkFilePath($absolutePath = false)
     {
-        if (isset($_SERVER['GAE_SERVICE'])) {
+        if (env('GAE_SERVICE')) {
             return session('upload_game_id').'/'.$this->chunkFileName;
         } else {
             return $this->getChunkDirectory($absolutePath).$this->chunkFileName;

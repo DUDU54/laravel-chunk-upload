@@ -116,7 +116,7 @@ class ChunkStorage
     public function files($rejectClosure = null)
     {
         // we need to filter files we don't support, lets use the collection
-        if (isset($_SERVER['GAE_SERVICE'])) {
+        if (env('GAE_SERVICE')) {
             $filesCollection = new Collection(Storage::disk('gcs')->files(session('upload_game_id')));
         } else{
             $filesCollection = new Collection($this->disk->files($this->directory(), false));

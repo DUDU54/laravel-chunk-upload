@@ -71,7 +71,7 @@ class ParallelSave extends ChunkSave
     protected function handleChunkFile($file)
     {
         // Move the uploaded file to chunk folder
-        if (isset($_SERVER['GAE_SERVICE'])) {
+        if (env('GAE_SERVICE')) {
             Storage::disk('gcs')->put($file, $this->file->get());
         }else {
             $this->file->move($this->getChunkDirectory(true), $this->chunkFileName);
@@ -129,7 +129,7 @@ class ParallelSave extends ChunkSave
         if (file_exists($finalFilePath)) {
             @unlink($finalFilePath);
         }
-        if (isset($_SERVER['GAE_SERVICE'])) {
+        if (env('GAE_SERVICE')) {
             if (!$destinationFile = @fopen($finalFilePath, 'ab')) {
                 throw new ChunkSaveException('Failed to open output stream.', 102);
             }
@@ -140,7 +140,7 @@ class ParallelSave extends ChunkSave
 
         // Append each chunk file
         foreach ($chunkFiles as $filePath) {
-            if (isset($_SERVER['GAE_SERVICE'])) {
+            if (env('GAE_SERVICE')) {
                 $fileContent = $gcsDisk->get($filePath);
                 fwrite($destinationFile, $fileContent);
                 $gcsDisk->delete($filePath);
@@ -155,7 +155,7 @@ class ParallelSave extends ChunkSave
                 $chunkFile->delete();
             }
         }
-        if (isset($_SERVER['GAE_SERVICE'])) {
+        if (env('GAE_SERVICE')) {
             @fclose($destinationFile);
         } else {
             $fileMerger->close();
