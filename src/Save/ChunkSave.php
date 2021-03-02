@@ -155,9 +155,7 @@ class ChunkSave extends AbstractSave
     protected function handleChunk()
     {
         // prepare the folder and file path
-        if (!env('GAE_SERVICE')) {
-            $this->createChunksFolderIfNeeded();
-        }
+        $this->createChunksFolderIfNeeded();
         $file = $this->getChunkFilePath();
 
         $this->handleChunkFile($file)
