@@ -6,6 +6,8 @@
 [![Latest Unstable Version](https://poser.pugx.org/pion/laravel-chunk-upload/v/unstable?format=flat)](https://packagist.org/packages/pion/laravel-chunk-upload)
 [![License](https://poser.pugx.org/pion/laravel-chunk-upload/license)](https://packagist.org/packages/pion/laravel-chunk-upload)
 
+# This package has been modified for a specific project, so it's therefore no longer compatible with the base repository
+
 ## Introduction
 
 > Supports Laravel from 5.2 to 7 (covered by integration tests on all versions).
